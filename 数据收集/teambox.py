@@ -61,8 +61,9 @@ class NbaTeamBoxscores:
             names.append(name)
         with open('id_to_name.txt', 'w', encoding='utf-8') as f:
             for i, id in enumerate(range(1610612747, 1610612767)):
-                f.write(id + ',' + names[i] + '\n')
+                f.write(str(id) + ',' + names[i] + '\n')
         print('---id_to_name---')
+        time.sleep(30)
 
     def games(self):
         url = 'http://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&Direction=DESC&LeagueID=00&PlayerOrTeam=T&Season='
@@ -106,6 +107,6 @@ class NbaTeamBoxscores:
 if __name__ == '__main__':
     start = time.clock()
     nba = NbaTeamBoxscores('requests.txt')
-    # nba.main(run_path='games')
-    print(nba.year_urls)
+    nba.main(run_path='games')
+    # print(nba.year_urls)
     print(time.clock() - start)
