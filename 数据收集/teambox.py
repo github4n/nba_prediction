@@ -1,9 +1,9 @@
 from requests_futures.sessions import FuturesSession
 import json
 import pyexcel as pe
-import shelve
 import time
 import os
+from collections import OrderedDict
 
 
 class NbaTeamBoxscores:
@@ -12,10 +12,19 @@ class NbaTeamBoxscores:
             url_eles, headers = f.read().split('====')
         url_eles = url_eles.split()
         headers = headers.split('\n')
-        self.team_urls = {}
-        for id in url_eles[-2].split(';'):
-            self.team_urls[id] = [url_eles[0] + t + url_eles[2] + id + url_eles[-1]
-                                  for t in url_eles[1].split(';')]
+        self.year_urls = OrderedDict()
+        # {
+        #   '2007-08':{
+        #               'team':url,
+        #               ...},
+        #   ...
+        # }
+        for year in url_eles[-2].split(';'):
+            self.year_urls[year] = {}
+            for id in url_eles[-3].split(';'):
+                self.year_urls[year][id] = \
+                    [url_eles[0] + t + url_eles[2] + year + url_eles[3] + id + url_eles[-1]
+                     for t in url_eles[1].split(';')]
         self.headers = {}
         for k, v in [h.split(': ') for h in headers if h]:
             self.headers[k] = v
@@ -36,8 +45,8 @@ class NbaTeamBoxscores:
         result['rowSet'] = [[game[i] for i in index] for game in rowSet]
         return result
 
-    def save_result(self, team, res):
-        pe.save_as(dest_file_name=team + '.xlsx',
+    def save_result(self, year_team, res):
+        pe.save_as(dest_file_name=year_team + '.xlsx',
                    array=[res['headers']] + res['rowSet'])
 
     def id_to_name(self):
@@ -50,35 +59,53 @@ class NbaTeamBoxscores:
             res = json.loads(f.result().text)['resultSets'][0]['rowSet'][0]
             name = res[2] + res[3]
             names.append(name)
-        f = shelve.open('id_to_name')
-        for i, id in enumerate(range(1610612747, 1610612767)):
-            f[str(id)] = names[i]
+        with open('id_to_name.txt', 'w', encoding='utf-8') as f:
+            for i, id in enumerate(range(1610612747, 1610612767)):
+                f.write(id + ',' + names[i] + '\n')
+        print('---id_to_name---')
 
     def games(self):
-        url = 'http://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&Direction=DESC&LeagueID=00&PlayerOrTeam=T&Season=2016-17&SeasonType=Regular+Season&Sorter=DATE'
-        result = FuturesSession().get(url, headers=self.headers).result().text
-        result = json.loads(result)
-        res = result['resultSets'][0]
-        pe.save_as(dest_file_name='games.xlsx', array=[res['headers']] + res['rowSet'])
+        url = 'http://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&Direction=DESC&LeagueID=00&PlayerOrTeam=T&Season='
+        url2 = '&SeasonType=Regular+Season&Sorter=DATE'
+        years = list(self.year_urls.keys())
+        futures = [FuturesSession().get(url + year + url2, headers=self.headers) for year in years]
+        for i, future in enumerate(futures):
+            result = json.loads(future.result().text)
+            res = result['resultSets'][0]
+            pe.save_as(dest_file_name=years[i] + '/games.xlsx', array=[res['headers']] + res['rowSet'])
+            print(years[i], '-----games-----')
 
-    def main(self):
-        f = shelve.open('team_results')
-        f2 = shelve.open('id_to_name')
-        for team, urls in self.team_urls.items():
-            if f2[str(team)] + '.xlsx' in os.listdir():
-                continue
-            result = self.sent_requests(urls)
-            team = result['rowSet'][0][result['headers'].index('TEAM_NAME')]
-            f[team] = result
-            print(team)
-            self.save_result(team, result)
-            time.sleep(10)
+    def main(self, run_path='teams'):
+        if not os.path.exists('id_to_name.txt'):
+            self.id_to_name()
+        for year in self.year_urls.keys():
+            if not os.path.exists(year):
+                os.mkdir(year)
+        if run_path == 'teams':
+            print('开始采集各个球队的历史数据')
+            id_to_name = {}
+            with open('id_to_name.txt', 'r', encoding='utf-8') as f:
+                for id, name in [line.strip().split(',') for line in f.readlines()]:
+                    id_to_name[str(id)] = name
+            for year, team_urls in self.year_urls.items():
+                for team, urls in team_urls.items():
+                    if id_to_name[str(team)] + '.xlsx' in os.listdir(year):
+                        continue
+                    result = self.sent_requests(urls)
+                    team = result['rowSet'][0][result['headers'].index('TEAM_NAME')]
+                    print(team)
+                    self.save_result(year + '/' + team, result)
+                    time.sleep(10)
+                print(year, '-----teams-----')
+                time.sleep(30)
+        else:
+            print('开始采集赛程赛果历史数据')
+            self.games()
 
 
 if __name__ == '__main__':
     start = time.clock()
     nba = NbaTeamBoxscores('requests.txt')
-    # nba.main()
-    # nba.id_to_name()
-    nba.games()
+    # nba.main(run_path='games')
+    print(nba.year_urls)
     print(time.clock() - start)
