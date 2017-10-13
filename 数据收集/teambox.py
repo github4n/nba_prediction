@@ -50,23 +50,32 @@ class NbaTeamBoxscores:
                    array=[res['headers']] + res['rowSet'])
 
     def id_to_name(self):
+        print('---id_to_name---')
         session = FuturesSession()
         names = []
         urls = [
             'http://stats.nba.com/stats/teaminfocommon?LeagueID=00&Season=2016-17&SeasonType=Regular+Season&TeamID='
-            + str(u) for u in range(1610612747, 1610612767)]
-        for f in [session.get(u, headers=self.headers) for u in urls]:
-            res = json.loads(f.result().text)['resultSets'][0]['rowSet'][0]
-            name = res[2] + res[3]
-            names.append(name)
+            + str(u) for u in range(1610612737, 1610612767)]
+
+        def get_name(urls):
+            for f in [session.get(u, headers=self.headers) for u in urls]:
+                res = json.loads(f.result().text)['resultSets'][0]['rowSet'][0]
+                name = res[2] + res[3]
+                names.append(name)
+
+        get_name(urls[:15])
+        print('完成前15个队,稍等30秒...')
+        time.sleep(30)
+        get_name(urls[15:])
         with open('id_to_name.txt', 'w', encoding='utf-8') as f:
-            for i, id in enumerate(range(1610612747, 1610612767)):
+            for i, id in enumerate(range(1610612737, 1610612767)):
                 f.write(str(id) + ',' + names[i] + '\n')
-        print('---id_to_name---')
+        print('完成后15个队,稍等30秒...')
         time.sleep(30)
 
     def games(self):
-        url = 'http://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&Direction=DESC&LeagueID=00&PlayerOrTeam=T&Season='
+        url = 'http://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&Direction=DESC&LeagueID=00' \
+              '&PlayerOrTeam=T&Season='
         url2 = '&SeasonType=Regular+Season&Sorter=DATE'
         years = list(self.year_urls.keys())
         futures = [FuturesSession().get(url + year + url2, headers=self.headers) for year in years]
@@ -94,10 +103,11 @@ class NbaTeamBoxscores:
                         continue
                     result = self.sent_requests(urls)
                     team = result['rowSet'][0][result['headers'].index('TEAM_NAME')]
-                    print(team)
                     self.save_result(year + '/' + team, result)
+                    print(team, '完成,稍等10秒...')
                     time.sleep(10)
                 print(year, '-----teams-----')
+                print('稍等30秒...')
                 time.sleep(30)
         else:
             print('开始采集赛程赛果历史数据')
@@ -107,6 +117,6 @@ class NbaTeamBoxscores:
 if __name__ == '__main__':
     start = time.clock()
     nba = NbaTeamBoxscores('requests.txt')
-    nba.main(run_path='games')
+    nba.main()
     # print(nba.year_urls)
     print(time.clock() - start)
