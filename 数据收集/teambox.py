@@ -60,18 +60,18 @@ class NbaTeamBoxscores:
         def get_name(urls):
             for f in [session.get(u, headers=self.headers) for u in urls]:
                 res = json.loads(f.result().text)['resultSets'][0]['rowSet'][0]
-                name = res[2] + res[3]
+                name = res[2] + ' ' + res[3]
                 names.append(name)
 
         get_name(urls[:15])
-        print('完成前15个队,稍等30秒...')
-        time.sleep(30)
+        print('完成前15个队,稍等10秒...')
+        time.sleep(10)
         get_name(urls[15:])
         with open('id_to_name.txt', 'w', encoding='utf-8') as f:
             for i, id in enumerate(range(1610612737, 1610612767)):
                 f.write(str(id) + ',' + names[i] + '\n')
-        print('完成后15个队,稍等30秒...')
-        time.sleep(30)
+        print('完成后15个队,稍等10秒...')
+        time.sleep(10)
 
     def games(self):
         url = 'http://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&Direction=DESC&LeagueID=00' \
@@ -98,14 +98,15 @@ class NbaTeamBoxscores:
                 for id, name in [line.strip().split(',') for line in f.readlines()]:
                     id_to_name[str(id)] = name
             for year, team_urls in self.year_urls.items():
-                for team, urls in team_urls.items():
-                    if id_to_name[str(team)] + '.xlsx' in os.listdir(year):
+                for team_id, urls in team_urls.items():
+                    if id_to_name[str(team_id)] + '.xlsx' in os.listdir(year):
+                        print(id_to_name[str(team_id)], '已采集')
                         continue
                     result = self.sent_requests(urls)
                     team = result['rowSet'][0][result['headers'].index('TEAM_NAME')]
                     self.save_result(year + '/' + team, result)
-                    print(team, '完成,稍等10秒...')
-                    time.sleep(10)
+                    print(team, '完成,稍等3秒...')
+                    time.sleep(3)
                 print(year, '-----teams-----')
                 print('稍等30秒...')
                 time.sleep(30)
