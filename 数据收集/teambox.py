@@ -4,6 +4,7 @@ import pyexcel as pe
 import time
 import os
 from collections import OrderedDict
+import requests
 
 
 class NbaTeamBoxscores:
@@ -105,19 +106,28 @@ class NbaTeamBoxscores:
                     result = self.sent_requests(urls)
                     team = result['rowSet'][0][result['headers'].index('TEAM_NAME')]
                     self.save_result(year + '/' + team, result)
-                    print(team, '完成,稍等3秒...')
+                    print(year, '-', team, '完成,稍等3秒...')
                     time.sleep(3)
                 print(year, '-----teams-----')
-                print('稍等30秒...')
-                time.sleep(30)
+                print('稍等10秒...')
+                time.sleep(10)
         else:
             print('开始采集赛程赛果历史数据')
             self.games()
+
+    def main_robust(self, run_path='teams', error_num=0):
+        try:
+            self.main(run_path)
+        except requests.exceptions.ConnectionError:
+            error_num += 1
+            print('!!!!!!!!!!!!!!!!!错误次数!!!!!!!!!!!!!  ', error_num, '次\n稍等10秒')
+            time.sleep(10)
+            self.main_robust(run_path, error_num)
 
 
 if __name__ == '__main__':
     start = time.clock()
     nba = NbaTeamBoxscores('requests.txt')
-    nba.main()
+    nba.main_robust()
     # print(nba.year_urls)
     print(time.clock() - start)
