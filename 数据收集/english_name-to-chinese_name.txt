@@ -1,0 +1,35 @@
+San Antonio Spurs-马刺
+Utah Jazz-爵士
+Indiana Pacers-步行者
+Oklahoma City Thunder-雷霆
+Los Angeles Lakers-快船
+Philadelphia 76ers-76人
+New Orleans Pelicans-鹈鹕
+Brooklyn Nets-篮网
+Minnesota Timberwolves-森林狼
+New Jersey Nets-篮网
+Charlotte Bobcats-黄蜂
+Chicago Bulls-公牛
+Charlotte Hornets-黄蜂
+Denver Nuggets-掘金
+Seattle SuperSonics-雷霆
+LA Clippers-快船
+New Orleans/Oklahoma City Hornets-鹈鹕
+Portland Trail Blazers-开拓者
+Sacramento Kings-国王
+Los Angeles Clippers-快船
+New York Knicks-尼克斯
+Atlanta Hawks-老鹰
+Miami Heat-热火
+Phoenix Suns-太阳
+Dallas Mavericks-小牛
+Cleveland Cavaliers-骑士
+Orlando Magic-魔术
+Boston Celtics-凯尔特人
+Toronto Raptors-猛龙
+Golden State Warriors-勇士
+Milwaukee Bucks-雄鹿
+Washington Wizards-奇才
+Memphis Grizzlies-灰熊
+Houston Rockets-火箭
+Detroit Pistons-活塞
