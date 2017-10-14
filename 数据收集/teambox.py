@@ -10,8 +10,8 @@ import requests
 class NbaTeamBoxscores:
     def __init__(self, txt):
         with open(txt, 'r', encoding='utf-8') as f:
-            url_eles, headers = f.read().split('====')
-        url_eles = url_eles.split()
+            url_eles, headers = f.read().split('=====')
+        url_eles = url_eles.split('\n')
         headers = headers.split('\n')
         self.year_urls = OrderedDict()
         # {
@@ -20,11 +20,11 @@ class NbaTeamBoxscores:
         #               ...},
         #   ...
         # }
-        for year in url_eles[-2].split(';'):
+        for year in url_eles[3].split(';'):
             self.year_urls[year] = {}
-            for id in url_eles[-3].split(';'):
+            for id in url_eles[-2].split(';'):
                 self.year_urls[year][id] = \
-                    [url_eles[0] + t + url_eles[2] + year + url_eles[3] + id + url_eles[-1]
+                    [url_eles[0] + t + url_eles[2] + year + url_eles[4] + id + url_eles[-1]
                      for t in url_eles[1].split(';')]
         self.headers = {}
         for k, v in [h.split(': ') for h in headers if h]:
@@ -128,6 +128,6 @@ class NbaTeamBoxscores:
 if __name__ == '__main__':
     start = time.clock()
     nba = NbaTeamBoxscores('requests.txt')
-    nba.main_robust()
-    # print(nba.year_urls)
+    # nba.main_robust()
+    print(nba.year_urls)
     print(time.clock() - start)
