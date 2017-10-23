@@ -55,3 +55,4 @@ class GetTrainData:
                 df_factor.iloc[i])
 
     def get_gamex_feature(self, df_up_to_date, team, opp, opp_next):
+        pass
