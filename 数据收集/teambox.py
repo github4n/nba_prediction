@@ -11,21 +11,20 @@ class NbaTeamBoxscores:
     def __init__(self, txt):
         with open(txt, 'r', encoding='utf-8') as f:
             url_eles, headers = f.read().split('=====')
-        url_eles = url_eles.split('\n')
-        headers = headers.split('\n')
+        url_eles = [e for e in url_eles.split('\n') if e]
+        headers = [e for e in headers.split('\n') if e]
         self.year_urls = OrderedDict()
         # {
         #   '2007-08':{
-        #               'team':url,
+        #               '1610612742':[url1,url2,...],
         #               ...},
         #   ...
         # }
         for year in url_eles[3].split(';'):
             self.year_urls[year] = {}
             for id in url_eles[-2].split(';'):
-                self.year_urls[year][id] = \
-                    [url_eles[0] + t + url_eles[2] + year + url_eles[4] + id + url_eles[-1]
-                     for t in url_eles[1].split(';')]
+                self.year_urls[year][id] = [url_eles[0] + t + url_eles[2] + year + url_eles[4] + id + url_eles[-1]
+                                            for t in url_eles[1].split(';')]
         self.headers = {}
         for k, v in [h.split(': ') for h in headers if h]:
             self.headers[k] = v
@@ -39,8 +38,7 @@ class NbaTeamBoxscores:
         for f in futures:
             res = json.loads(f.result().text)['resultSets'][0]
             headers += res['headers']
-            rowSet = res['rowSet'] if len(rowSet) == 0 else \
-                [rowSet[i] + game for i, game in enumerate(res['rowSet'])]
+            rowSet = res['rowSet'] if len(rowSet) == 0 else [rowSet[i] + game for i, game in enumerate(res['rowSet'])]
         result['headers'] = list(set(headers))
         index = [headers.index(h) for h in result['headers']]
         result['rowSet'] = [[game[i] for i in index] for game in rowSet]
@@ -96,7 +94,7 @@ class NbaTeamBoxscores:
             print('开始采集各个球队的历史数据')
             id_to_name = {}
             with open('id_to_name.txt', 'r', encoding='utf-8') as f:
-                for id, name in [line.strip().split(',') for line in f.readlines()]:
+                for id, name in [line.strip().split(',') for line in f.readlines() if line]:
                     id_to_name[str(id)] = name
             for year, team_urls in self.year_urls.items():
                 for team_id, urls in team_urls.items():
@@ -128,6 +126,5 @@ class NbaTeamBoxscores:
 if __name__ == '__main__':
     start = time.clock()
     nba = NbaTeamBoxscores('requests.txt')
-    # nba.main_robust()
-    print(nba.year_urls)
+    nba.main_robust("games")
     print(time.clock() - start)
